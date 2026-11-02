@@ -17,14 +17,12 @@ class GeminiCoachService(
     private val apiKey: String,
     private val systemPrompt: String
 ) {
-    // Liste von Fallback-Modellen (aktuelle Google AI Studio Modelle)
+    // Liste von Fallback-Modellen (leichtgewichtigste/schnellste Modelle zuerst)
     private val modelCandidates = listOf(
-        "gemini-3.8-flash",
-        "gemini-3.5-flash",
         "gemini-3.5-flash-lite",
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash-latest"
+        "gemini-3.5-flash",
+        "gemini-3.8-flash",
+        "gemini-2.5-flash"
     )
 
     private fun createModel(modelName: String): GenerativeModel {
@@ -39,12 +37,12 @@ class GeminiCoachService(
 
     /**
      * Sendet eine Nachricht an Gemini mit Chat-Historie und liefert die Antwort
-     * als kontinuierlichen Streaming-Flow (Token/Text-Chunks).
-     * Falls ein Modell-Name deprecated / nicht verfügbar ist, wird automatisch das nächste versucht.
+     * als kontinuierlichen Streaming-Flow (Token/Text-Chunks) zusammen mit dem verwendeten Modellnamen.
      */
     fun sendMessageStream(
         history: List<ChatMessage>,
-        userMessage: String
+        userMessage: String,
+        onModelSelected: (String) -> Unit = {}
     ): Flow<String> = flow {
         val sdkHistory: List<Content> = history.map { msg ->
             content(role = if (msg.isFromUser) "user" else "model") {
@@ -61,7 +59,12 @@ class GeminiCoachService(
                 val chat = model.startChat(history = sdkHistory)
                 val responseStream = chat.sendMessageStream(userMessage)
 
+                var firstChunk = true
                 responseStream.collect { chunk ->
+                    if (firstChunk) {
+                        onModelSelected(candidate)
+                        firstChunk = false
+                    }
                     val chunkText = chunk.text
                     if (!chunkText.isNullOrEmpty()) {
                         success = true
@@ -73,7 +76,7 @@ class GeminiCoachService(
                 }
             } catch (e: Exception) {
                 lastException = e
-                // Falls Fehler (z.B. 404 Not Found, 400 Unsupported, etc.) -> nächstes Modell probieren
+                // Bei Fehler nächstes Modell in der Kette testen
                 continue
             }
         }

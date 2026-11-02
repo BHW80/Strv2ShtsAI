@@ -98,6 +98,7 @@ fun CoachChatScreen(
                 // Header-Bar mit AeroCoach Titel & API-Key Button
                 CoachHeader(
                     hasApiKey = uiState.hasApiKey,
+                    activeModelName = uiState.activeModelName,
                     onApiKeyClick = { showApiKeyDialog = true }
                 )
 
@@ -106,7 +107,7 @@ fun CoachChatScreen(
                     ApiKeyBanner(onClick = { showApiKeyDialog = true })
                 }
 
-                // Chat-Nachrichten Liste
+                // Chat-Nachrichten Liste (nach unten verankert, wächst nach oben)
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
@@ -114,7 +115,7 @@ fun CoachChatScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
                     contentPadding = PaddingValues(vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Bottom)
                 ) {
                     items(uiState.messages, key = { it.id }) { message ->
                         ChatBubble(message = message)
@@ -173,6 +174,7 @@ fun CoachChatScreen(
 @Composable
 private fun CoachHeader(
     hasApiKey: Boolean,
+    activeModelName: String,
     onApiKeyClick: () -> Unit
 ) {
     Row(
@@ -190,9 +192,10 @@ private fun CoachHeader(
                 color = Color.White
             )
             Text(
-                text = "Dein intelligenter Gemini AI Ausdauertrainer",
+                text = "Dein intelligenter Gemini Ausdauertrainer ($activeModelName)",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.LightGray
+                color = Color(0xFFE0E0E0), // Deutlich erhöhter Kontrast
+                fontWeight = FontWeight.Medium
             )
         }
 

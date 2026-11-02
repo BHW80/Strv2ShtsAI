@@ -20,6 +20,7 @@ data class CoachUiState(
     val messages: List<ChatMessage> = emptyList(),
     val isStreaming: Boolean = false,
     val currentStreamingResponse: String = "",
+    val activeModelName: String = "gemini-3.5-flash-lite",
     val hasApiKey: Boolean = false,
     val errorMessage: String? = null,
     val quickPrompts: List<String> = listOf(
@@ -109,7 +110,10 @@ class CoachChatViewModel(
                 val sb = java.lang.StringBuilder()
                 coachService.sendMessageStream(
                     history = updatedMessages.dropLast(1), // bisheriger Verlauf ohne die neue User-Nachricht
-                    userMessage = text
+                    userMessage = text,
+                    onModelSelected = { selectedModel ->
+                        _uiState.update { it.copy(activeModelName = selectedModel) }
+                    }
                 ).collect { chunk ->
                     sb.append(chunk)
                     _uiState.update {
