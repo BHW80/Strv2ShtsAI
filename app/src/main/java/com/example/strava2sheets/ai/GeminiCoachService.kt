@@ -17,9 +17,17 @@ class GeminiCoachService(
     private val apiKey: String,
     private val systemPrompt: String
 ) {
-    private val generativeModel: GenerativeModel by lazy {
-        GenerativeModel(
-            modelName = "gemini-1.5-flash",
+    // Liste von Fallback-Modellen (aktuellste Flash-Modelle zuerst)
+    private val modelCandidates = listOf(
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash-latest",
+        "gemini-1.5-flash"
+    )
+
+    private fun createModel(modelName: String): GenerativeModel {
+        return GenerativeModel(
+            modelName = modelName,
             apiKey = apiKey,
             systemInstruction = content {
                 text(systemPrompt)
@@ -30,26 +38,51 @@ class GeminiCoachService(
     /**
      * Sendet eine Nachricht an Gemini mit Chat-Historie und liefert die Antwort
      * als kontinuierlichen Streaming-Flow (Token/Text-Chunks).
+     * Falls ein Modell-Name deprecated / nicht verfügbar ist, wird automatisch das nächste versucht.
      */
     fun sendMessageStream(
         history: List<ChatMessage>,
         userMessage: String
     ): Flow<String> = flow {
-        // Konvertiere die UI-Historie in das SDK-Content-Format
         val sdkHistory: List<Content> = history.map { msg ->
             content(role = if (msg.isFromUser) "user" else "model") {
                 text(msg.text)
             }
         }
 
-        val chat = generativeModel.startChat(history = sdkHistory)
-        val responseStream = chat.sendMessageStream(userMessage)
+        var lastException: Exception? = null
+        var success = false
 
-        responseStream.collect { chunk ->
-            val chunkText = chunk.text
-            if (!chunkText.isNullOrEmpty()) {
-                emit(chunkText)
+        for (candidate in modelCandidates) {
+            try {
+                val model = createModel(candidate)
+                val chat = model.startChat(history = sdkHistory)
+                val responseStream = chat.sendMessageStream(userMessage)
+
+                responseStream.collect { chunk ->
+                    val chunkText = chunk.text
+                    if (!chunkText.isNullOrEmpty()) {
+                        success = true
+                        emit(chunkText)
+                    }
+                }
+                if (success) {
+                    return@flow
+                }
+            } catch (e: Exception) {
+                lastException = e
+                // Falls 404 / NotFound -> nächstes Modell probieren
+                val msg = e.message?.lowercase() ?: ""
+                if (msg.contains("not found") || msg.contains("404") || msg.contains("deprecated")) {
+                    continue
+                } else {
+                    throw e
+                }
             }
+        }
+
+        if (!success && lastException != null) {
+            throw lastException
         }
     }
 }
