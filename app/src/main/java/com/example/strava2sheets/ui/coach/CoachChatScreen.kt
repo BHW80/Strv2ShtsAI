@@ -190,7 +190,7 @@ private fun CoachHeader(
                 color = Color.White
             )
             Text(
-                text = "Dein intelligenter Gemini 1.5 Ausdauertrainer",
+                text = "Dein intelligenter Gemini AI Ausdauertrainer",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.LightGray
             )
