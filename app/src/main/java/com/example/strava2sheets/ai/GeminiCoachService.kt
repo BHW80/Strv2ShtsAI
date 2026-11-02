@@ -17,12 +17,16 @@ class GeminiCoachService(
     private val apiKey: String,
     private val systemPrompt: String
 ) {
-    // Liste von Fallback-Modellen (aktuellste Flash-Modelle zuerst)
+    // Liste von Fallback-Modellen (aktuelle Google AI Studio Modelle)
     private val modelCandidates = listOf(
-        "gemini-2.5-flash",
         "gemini-2.0-flash",
+        "gemini-2.0-flash-exp",
+        "gemini-2.5-flash",
         "gemini-1.5-flash-latest",
-        "gemini-1.5-flash"
+        "gemini-1.5-flash-8b",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+        "gemini-pro"
     )
 
     private fun createModel(modelName: String): GenerativeModel {
@@ -71,13 +75,8 @@ class GeminiCoachService(
                 }
             } catch (e: Exception) {
                 lastException = e
-                // Falls 404 / NotFound -> nächstes Modell probieren
-                val msg = e.message?.lowercase() ?: ""
-                if (msg.contains("not found") || msg.contains("404") || msg.contains("deprecated")) {
-                    continue
-                } else {
-                    throw e
-                }
+                // Falls Fehler (z.B. 404 Not Found, 400 Unsupported, etc.) -> nächstes Modell probieren
+                continue
             }
         }
 
