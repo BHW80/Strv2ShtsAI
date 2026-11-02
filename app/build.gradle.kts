@@ -73,6 +73,9 @@ dependencies {
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.androidx.security.crypto)
 
+    // Google Generative AI (Gemini)
+    implementation(libs.google.generativeai)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

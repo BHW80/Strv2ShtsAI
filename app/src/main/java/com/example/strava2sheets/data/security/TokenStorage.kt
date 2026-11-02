@@ -114,6 +114,23 @@ open class TokenStorage(context: Context? = null) {
 
     open fun getSpreadsheetId(): String? = sharedPreferences?.getString(KEY_SPREADSHEET_ID, null)
 
+    // Gemini AI API Key
+    open fun saveGeminiApiKey(apiKey: String) {
+        sharedPreferences?.edit()
+            ?.putString(KEY_GEMINI_API_KEY, apiKey)
+            ?.apply()
+    }
+
+    open fun getGeminiApiKey(): String? = sharedPreferences?.getString(KEY_GEMINI_API_KEY, null)
+
+    open fun clearGeminiApiKey() {
+        sharedPreferences?.edit()
+            ?.remove(KEY_GEMINI_API_KEY)
+            ?.apply()
+    }
+
+    open fun hasGeminiApiKey(): Boolean = !getGeminiApiKey().isNullOrBlank()
+
     open fun clearAll() {
         sharedPreferences?.edit()?.clear()?.apply()
     }
@@ -132,5 +149,6 @@ open class TokenStorage(context: Context? = null) {
         private const val KEY_GOOGLE_EXPIRES_AT = "google_expires_at"
 
         private const val KEY_SPREADSHEET_ID = "spreadsheet_id"
+        private const val KEY_GEMINI_API_KEY = "gemini_api_key"
     }
 }

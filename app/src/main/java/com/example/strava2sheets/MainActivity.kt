@@ -16,6 +16,7 @@ import com.example.strava2sheets.data.remote.auth.GoogleAuthManager
 import com.example.strava2sheets.data.remote.auth.StravaAuthManager
 import com.example.strava2sheets.data.security.TokenStorage
 import com.example.strava2sheets.data.worker.SyncManager
+import com.example.strava2sheets.ui.coach.CoachChatViewModel
 import com.example.strava2sheets.ui.dashboard.DashboardViewModel
 import com.example.strava2sheets.ui.navigation.MainAppNavigation
 
@@ -44,6 +45,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val coachViewModel: CoachChatViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val tokenStorage = TokenStorage(this@MainActivity)
+                val db = AppDatabase.getInstance(this@MainActivity)
+
+                return CoachChatViewModel(
+                    tokenStorage = tokenStorage,
+                    activityDao = db.activityDao(),
+                    athleteProfileDao = db.athleteProfileDao()
+                ) as T
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -52,7 +69,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    MainAppNavigation(viewModel = viewModel)
+                    MainAppNavigation(
+                        viewModel = viewModel,
+                        coachViewModel = coachViewModel
+                    )
                 }
             }
         }

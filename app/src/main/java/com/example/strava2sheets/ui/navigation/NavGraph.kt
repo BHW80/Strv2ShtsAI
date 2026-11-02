@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.strava2sheets.ui.activities.ActivityListScreen
 import com.example.strava2sheets.ui.athlete.AthleteScreen
+import com.example.strava2sheets.ui.coach.CoachChatScreen
+import com.example.strava2sheets.ui.coach.CoachChatViewModel
 import com.example.strava2sheets.ui.dashboard.DashboardScreen
 import com.example.strava2sheets.ui.dashboard.DashboardViewModel
 import com.example.strava2sheets.ui.document.DocumentScreen
@@ -37,6 +40,7 @@ import kotlinx.coroutines.launch
 
 sealed class Screen(val title: String, val icon: ImageVector) {
     object Dashboard : Screen("Start", Icons.Default.Home)
+    object Coach : Screen("Coach", Icons.Default.Face)
     object Activities : Screen("Aktivität", Icons.AutoMirrored.Filled.List)
     object Statistics : Screen("Statistik", Icons.Default.Star)
     object Goals : Screen("Ziele", Icons.Default.Notifications)
@@ -46,7 +50,8 @@ sealed class Screen(val title: String, val icon: ImageVector) {
 
 @Composable
 fun MainAppNavigation(
-    viewModel: DashboardViewModel
+    viewModel: DashboardViewModel,
+    coachViewModel: CoachChatViewModel
 ) {
     var showSplash by rememberSaveable { mutableStateOf(true) }
 
@@ -57,16 +62,21 @@ fun MainAppNavigation(
             }
         )
     } else {
-        MainAppPager(viewModel = viewModel)
+        MainAppPager(
+            viewModel = viewModel,
+            coachViewModel = coachViewModel
+        )
     }
 }
 
 @Composable
 fun MainAppPager(
-    viewModel: DashboardViewModel
+    viewModel: DashboardViewModel,
+    coachViewModel: CoachChatViewModel
 ) {
     val navBarScreens = listOf(
         Screen.Dashboard,
+        Screen.Coach,
         Screen.Activities,
         Screen.Statistics,
         Screen.Goals,
@@ -114,11 +124,12 @@ fun MainAppPager(
         ) { page ->
             when (page) {
                 0 -> DashboardScreen(viewModel = viewModel)
-                1 -> ActivityListScreen(viewModel = viewModel)
-                2 -> StatisticsScreen(viewModel = viewModel)
-                3 -> GoalsScreen(viewModel = viewModel)
-                4 -> AthleteScreen(viewModel = viewModel)
-                5 -> DocumentScreen(viewModel = viewModel)
+                1 -> CoachChatScreen(viewModel = coachViewModel)
+                2 -> ActivityListScreen(viewModel = viewModel)
+                3 -> StatisticsScreen(viewModel = viewModel)
+                4 -> GoalsScreen(viewModel = viewModel)
+                5 -> AthleteScreen(viewModel = viewModel)
+                6 -> DocumentScreen(viewModel = viewModel)
             }
         }
     }
