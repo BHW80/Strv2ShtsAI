@@ -135,6 +135,22 @@ flowchart TD
    - **Google Sheets:** Konfiguriere die Google OAuth 2.0 Web Client ID für Drive & Sheets.
    - **Gemini AI:** Kopiere deinen API-Key aus Google AI Studio und speichere ihn in der App im Tab **Coach** über das Schloss-/Schlüssel-Icon.
 
+### 🌐 Strava OAuth Callback & Parallele Nutzung über dieselbe API
+
+Strava erlaubt pro Entwickler-Applikation nur **eine einzige Callback-Domain**. Wenn mehrere Clients (z. B. ein Web-Cockpit und Android-Apps) dieselbe Strava API-Applikation parallel nutzen, empfiehlt sich ein standardisierter HTTPS-Redirect:
+
+- **Strava Callback-Domain:** `weltler.at`
+- **Redirect-URI für die Android-App:** `https://weltler.at/app-callback`
+- **Funktionsweise:**
+  - Der Login-Flow leitet nach der Autorisierung auf `https://weltler.at/app-callback?code=...` weiter.
+  - Android-Apps, die über diese API angebunden sind, fangen diesen HTTPS-Link via `intent-filter` (App Links) direkt ab und übernehmen den Autorisierungs-Code.
+  - Als robuster Fallback empfiehlt sich auf dem Server unter `/app-callback` eine einfache HTML-Weiterleitung auf das Custom Scheme (`strava-sync://redirect?code=...`), damit die Rückkehr in mobile Clients auch ohne verifizierte Digital Asset Links auf jedem Browser/Endgerät gewährleistet ist.
+
+#### ⚠️ Auswirkungen bei geteilter Strava API-Nutzung:
+1. **Token-Refresh:** Der automatische Token-Refresh bestehender Installationen läuft völlig unabhängig weiter, da beim Refresh nur `client_id`, `client_secret` und das `refresh_token` geprüft werden (keine Redirect-URI-Prüfung).
+2. **Neu-Autorisierung:** Alle mobilen Clients müssen denselben Domain-Pfad (z. B. `https://weltler.at/app-callback`) anfragen, um `Invalid redirect_uri`-Fehler zu vermeiden.
+3. **Gemeinsame Rate-Limits:** Nutzen Web-Anwendungen und Android-Apps dieselben Strava API-Zugangsdaten, teilen sie sich das API-Budget (100 Requests pro 15 Minuten, 1.000 Requests pro Tag).
+
 4. **Kompilieren und Ausführen:**
    - Verbinde ein Android-Gerät oder starte einen Emulator (API 26+) und drücke **Run (Shift + F10)**.
 
