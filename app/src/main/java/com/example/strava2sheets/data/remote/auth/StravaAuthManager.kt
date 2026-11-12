@@ -13,7 +13,7 @@ class StravaAuthManager(
 ) {
 
     fun getAuthorizationIntent(clientId: String): Intent {
-        val redirectUri = "strava-sync://redirect"
+        val redirectUri = REDIRECT_URI_HTTPS
         val authUrl = Uri.parse("https://www.strava.com/oauth/authorize")
             .buildUpon()
             .appendQueryParameter("client_id", clientId)
@@ -28,7 +28,9 @@ class StravaAuthManager(
 
     fun extractAuthorizationCode(uri: Uri?): String? {
         if (uri == null) return null
-        if (uri.scheme == "strava-sync" && uri.host == "redirect") {
+        val isHttpsRedirect = uri.scheme == "https" && uri.host == "weltler.at" && uri.path?.startsWith("/app-callback") == true
+        val isCustomScheme = uri.scheme == "strava-sync" && uri.host == "redirect"
+        if (isHttpsRedirect || isCustomScheme) {
             return uri.getQueryParameter("code")
         }
         return null
@@ -90,5 +92,9 @@ class StravaAuthManager(
 
     fun clearTokens() {
         tokenStorage.clearStravaTokens()
+    }
+
+    companion object {
+        const val REDIRECT_URI_HTTPS = "https://weltler.at/app-callback"
     }
 }
